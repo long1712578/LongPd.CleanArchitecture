@@ -4,15 +4,24 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.5.4" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.68.1" />
+    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.68.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LongPd.CleanArchitecture.Application\LongPd.CleanArchitecture.Application.csproj" />
     <ProjectReference Include="..\LongPd.CleanArchitecture.Infrastructure\LongPd.CleanArchitecture.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- gRPC proto files -->
+    <Protobuf Include="Protos\ticket.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>

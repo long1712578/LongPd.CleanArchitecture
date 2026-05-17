@@ -1,0 +1,80 @@
+using LongPd.CleanArchitecture.Api.Extensions;
+using LongPd.CleanArchitecture.Application.Features.Events.Commands.CreateEvent;
+using LongPd.CleanArchitecture.Application.Features.Events.Queries.GetEventById;
+using MediatR;
+
+namespace LongPd.CleanArchitecture.Api.Endpoints;
+
+/// <summary>
+/// REST endpoints for the Events feature.
+/// RULES:
+///   - Endpoints are THIN: HTTP → MediatR → Result → HTTP
+///   - No business logic here
+///   - Use TypedResults for compile-time safety
+/// </summary>
+public sealed class EventEndpoints : IEndpointDefinition
+{
+    public void RegisterEndpoints(IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/events")
+            .WithTags("Events")
+            .WithOpenApi();
+
+        group.MapPost("/", CreateEventAsync)
+            .WithName("CreateEvent")
+            .WithSummary("Create a new event (draft state).")
+            .Produces<CreateEventResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapGet("/{id:guid}", GetEventByIdAsync)
+            .WithName("GetEventById")
+            .WithSummary("Get event details by ID, including ticket tiers.")
+            .Produces<EventDetailResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+    }
+
+    // ─── Handlers ─────────────────────────────────────────────────────────────
+
+    private static async Task<IResult> CreateEventAsync(
+        CreateEventRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var command = new CreateEventCommand(
+            request.Name,
+            request.Description,
+            request.StartDate,
+            request.EndDate,
+            request.Venue,
+            request.TotalCapacity);
+
+        var result = await sender.Send(command, ct);
+
+        return result.Match(
+            onSuccess: response => Results.CreatedAtRoute(
+                "GetEventById",
+                new { id = response.Id },
+                response),
+            onFailure: error => error.ToHttpError());
+    }
+
+    private static async Task<IResult> GetEventByIdAsync(
+        Guid id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var query = new GetEventByIdQuery(id);
+        var result = await sender.Send(query, ct);
+        return result.ToHttpResult();
+    }
+}
+
+// ─── Request DTOs (Api layer only — NOT shared with Application) ──────────────
+public sealed record CreateEventRequest(
+    string Name,
+    string Description,
+    DateTime StartDate,
+    DateTime EndDate,
+    string Venue,
+    int TotalCapacity);

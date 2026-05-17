@@ -1,41 +1,68 @@
+using LongPd.CleanArchitecture.Api.Extensions;
+using LongPd.CleanArchitecture.Api.Grpc;
+using LongPd.CleanArchitecture.Api.Middleware;
+using LongPd.CleanArchitecture.Api.Services;
+using LongPd.CleanArchitecture.Application;
+using LongPd.CleanArchitecture.Application.Abstractions.Services;
+using LongPd.CleanArchitecture.Infrastructure;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// ─── Clean Architecture Layers Registration ──────────────────────────────────
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// ─── API Presentation Layer Concerns ───────────────────────────────────────
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Auto-discover and register all Minimal API endpoint definitions
+builder.Services.AddEndpointDefinitions();
+
+// Global Exception Handler (RFC 7807)
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Add gRPC Services
+builder.Services.AddGrpc();
+
+// Add OpenAPI / Swagger
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ─── HTTP Request Pipeline ──────────────────────────────────────────────────
+
+// Global Exception Handling middleware
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
+    // Map OpenAPI JSON endpoint
     app.MapOpenApi();
+    
+    // Map modern Scalar API Documentation UI (alternative to SwaggerUI)
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("LongPd.CleanArchitecture API Documentation")
+               .WithTheme(ScalarTheme.DeepSpace)
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Enable gRPC-Web support (essential for React/JS browser clients)
+app.UseGrpcWeb(new GrpcWebOptions { DefaultEnabled = true });
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// Map Minimal API Endpoints
+app.MapEndpointDefinitions();
+
+// Map gRPC Services with gRPC-Web integration
+app.MapGrpcService<TicketGrpcServiceImpl>().EnableGrpcWeb();
 
 app.Run();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+// Required for integration testing visibility
+public partial class Program { }
