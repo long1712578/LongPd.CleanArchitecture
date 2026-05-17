@@ -32,6 +32,11 @@ jobs:
       - name: Verify generated OpenAPI file
         run: |
           ls -la LongPd.CleanArchitecture.Api/wwwroot/
+          # The generator names it based on the project: LongPd.CleanArchitecture.Api.json
+          # We rename it to the standard openapi.json so that index.html resolves it correctly.
+          if [ -f "LongPd.CleanArchitecture.Api/wwwroot/LongPd.CleanArchitecture.Api.json" ]; then
+            mv LongPd.CleanArchitecture.Api/wwwroot/LongPd.CleanArchitecture.Api.json LongPd.CleanArchitecture.Api/wwwroot/openapi.json
+          fi
           # Ensure openapi.json exists
           test -f LongPd.CleanArchitecture.Api/wwwroot/openapi.json
 
