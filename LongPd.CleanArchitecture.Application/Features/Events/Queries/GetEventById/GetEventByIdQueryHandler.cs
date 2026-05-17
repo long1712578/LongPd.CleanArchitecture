@@ -3,6 +3,7 @@ using LongPd.CleanArchitecture.Application.Abstractions.Data;
 using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
 using LongPd.CleanArchitecture.Application.Common;
 using LongPd.CleanArchitecture.Application.Features.Events.Dtos;
+using LongPd.CleanArchitecture.Domain.Enums;
 
 namespace LongPd.CleanArchitecture.Application.Features.Events.Queries.GetEventById;
 
@@ -64,7 +65,7 @@ public sealed class GetEventByIdQueryHandler(IDbConnectionFactory dbConnectionFa
             ev.Venue, ev.TotalCapacity, ev.IsPublished, ev.CreatedAt, ev.CreatedBy,
             tickets.Select(t => new TicketTierSummary(
                 t.TicketId, t.TierName, t.Price, t.Currency,
-                t.TotalQuantity, t.AvailableQuantity, t.Status)).ToList());
+                t.TotalQuantity, t.AvailableQuantity, ((TicketStatus)t.Status).ToString())).ToList());
 
         return Result.Success(response);
     }
@@ -78,5 +79,5 @@ public sealed class GetEventByIdQueryHandler(IDbConnectionFactory dbConnectionFa
 
     private sealed record TicketRow(
         Guid TicketId, string TierName, decimal Price, string Currency,
-        int TotalQuantity, int AvailableQuantity, string Status);
+        int TotalQuantity, int AvailableQuantity, int Status);
 }

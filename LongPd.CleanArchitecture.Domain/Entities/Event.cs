@@ -69,6 +69,19 @@ public sealed class Event : AuditableEntity, ISoftDelete
         return @event;
     }
 
+    public void AddTicketTier(string tierName, Money price, int quantity)
+    {
+        if (IsPublished)
+            throw new DomainException("Cannot add tickets to a published event.");
+
+        var totalCurrentCapacity = _tickets.Sum(t => t.TotalQuantity);
+        if (totalCurrentCapacity + quantity > TotalCapacity)
+            throw new DomainException("Total tickets cannot exceed event capacity.");
+
+        var ticket = Ticket.Create(Id, tierName, price, quantity);
+        _tickets.Add(ticket);
+    }
+
     public void Publish()
     {
         if (IsPublished)

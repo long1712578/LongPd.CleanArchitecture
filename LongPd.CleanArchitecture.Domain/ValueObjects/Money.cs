@@ -11,7 +11,7 @@ public sealed record Money
     public decimal Amount { get; }
     public string Currency { get; }
 
-    private Money(decimal amount, string currency)
+    public Money(decimal amount, string currency)
     {
         Amount = amount;
         Currency = currency;

@@ -1,7 +1,9 @@
 using LongPd.CleanArchitecture.Api.Extensions;
 using LongPd.CleanArchitecture.Application.Features.Tickets.Commands.ReserveTicket;
+using LongPd.CleanArchitecture.Application.Features.Tickets.Commands.CancelTicket;
 using LongPd.CleanArchitecture.Application.Features.Tickets.Queries.GetAvailableTickets;
 using MediatR;
+using LongPd.CleanArchitecture.Application.Features.Tickets.Dtos;
 
 namespace LongPd.CleanArchitecture.Api.Endpoints;
 
@@ -29,6 +31,13 @@ public sealed class TicketEndpoints : IEndpointDefinition
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/cancel", CancelTicketAsync)
+            .WithName("CancelTicket")
+            .WithSummary("Cancel a reservation and return tickets to the pool.")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -49,8 +58,6 @@ public sealed class TicketEndpoints : IEndpointDefinition
         IHttpContextAccessor httpContextAccessor,
         CancellationToken ct)
     {
-        // Extract userId from JWT (ICurrentUserService handles this in UnitOfWork)
-        // We pass it explicitly so the command is testable without HTTP context
         var userId = httpContextAccessor.HttpContext?.User
             .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
             ?? "anonymous";
@@ -59,7 +66,18 @@ public sealed class TicketEndpoints : IEndpointDefinition
         var result = await sender.Send(command, ct);
         return result.ToHttpResult();
     }
+
+    private static async Task<IResult> CancelTicketAsync(
+        CancelTicketRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var command = new CancelTicketCommand(request.TicketId, request.Count);
+        var result = await sender.Send(command, ct);
+        return result.ToHttpResult();
+    }
 }
 
-// ─── Request DTO ──────────────────────────────────────────────────────────────
+// ─── Request DTOs ─────────────────────────────────────────────────────────────
 public sealed record ReserveTicketRequest(Guid TicketId, int Count);
+public sealed record CancelTicketRequest(Guid TicketId, int Count);

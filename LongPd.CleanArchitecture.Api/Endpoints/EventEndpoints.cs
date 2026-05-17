@@ -1,5 +1,7 @@
 using LongPd.CleanArchitecture.Api.Extensions;
 using LongPd.CleanArchitecture.Application.Features.Events.Commands.CreateEvent;
+using LongPd.CleanArchitecture.Application.Features.Events.Commands.PublishEvent;
+using LongPd.CleanArchitecture.Application.Features.Events.Dtos;
 using LongPd.CleanArchitecture.Application.Features.Events.Queries.GetEventById;
 using MediatR;
 
@@ -25,6 +27,13 @@ public sealed class EventEndpoints : IEndpointDefinition
             .WithSummary("Create a new event (draft state).")
             .Produces<CreateEventResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/publish", PublishEventAsync)
+            .WithName("PublishEvent")
+            .WithSummary("Publish an event by adding ticket tiers and making it available.")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         group.MapGet("/{id:guid}", GetEventByIdAsync)
@@ -59,6 +68,16 @@ public sealed class EventEndpoints : IEndpointDefinition
             onFailure: error => error.ToHttpError());
     }
 
+    private static async Task<IResult> PublishEventAsync(
+        PublishEventRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var command = new PublishEventCommand(request.EventId, request.TicketTiers);
+        var result = await sender.Send(command, ct);
+        return result.ToHttpResult();
+    }
+
     private static async Task<IResult> GetEventByIdAsync(
         Guid id,
         ISender sender,
@@ -78,3 +97,7 @@ public sealed record CreateEventRequest(
     DateTime EndDate,
     string Venue,
     int TotalCapacity);
+
+public sealed record PublishEventRequest(
+    Guid EventId,
+    List<TicketTierRequest> TicketTiers);

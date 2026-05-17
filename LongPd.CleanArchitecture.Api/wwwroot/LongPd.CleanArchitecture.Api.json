@@ -56,6 +56,50 @@
         }
       }
     },
+    "/api/events/publish": {
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Publish an event by adding ticket tiers and making it available.",
+        "operationId": "PublishEvent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}": {
       "get": {
         "tags": [
@@ -193,6 +237,50 @@
           }
         }
       }
+    },
+    "/api/tickets/cancel": {
+      "post": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Cancel a reservation and return tickets to the pool.",
+        "operationId": "CancelTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -233,6 +321,23 @@
           },
           "isAvailable": {
             "type": "boolean"
+          }
+        }
+      },
+      "CancelTicketRequest": {
+        "required": [
+          "ticketId",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -376,6 +481,25 @@
           }
         }
       },
+      "PublishEventRequest": {
+        "required": [
+          "eventId",
+          "ticketTiers"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ticketTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketTierRequest"
+            }
+          }
+        }
+      },
       "ReserveTicketRequest": {
         "required": [
           "ticketId",
@@ -426,6 +550,31 @@
           },
           "currency": {
             "type": "string"
+          }
+        }
+      },
+      "TicketTierRequest": {
+        "required": [
+          "tierName",
+          "priceAmount",
+          "priceCurrency",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "tierName": {
+            "type": "string"
+          },
+          "priceAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "priceCurrency": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

@@ -1,5 +1,6 @@
 using LongPd.CleanArchitecture.Domain.Common;
 using LongPd.CleanArchitecture.Domain.Entities;
+using LongPd.CleanArchitecture.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 
 namespace LongPd.CleanArchitecture.Infrastructure.Persistence;
@@ -7,9 +8,9 @@ namespace LongPd.CleanArchitecture.Infrastructure.Persistence;
 /// <summary>
 /// EF Core DbContext — write-side database context.
 /// Responsibilities:
-///   1. Apply all entity configurations from this assembly (IEntityTypeConfiguration).
-///   2. Apply global query filters for soft-delete entities.
-///   3. SaveChangesAsync is called ONLY via IUnitOfWork (never inject DbContext directly in Application).
+/// - Apply all entity configurations from this assembly (IEntityTypeConfiguration).
+/// - Apply global query filters for soft-delete entities.
+/// - SaveChangesAsync is called ONLY via IUnitOfWork (never inject DbContext directly in Application).
 /// </summary>
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
@@ -25,12 +26,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
+        // Automatically apply UTC Converter to all DateTime properties globally.
         configurationBuilder
             .Properties<DateTime>()
+            .HaveConversion<UtcDateTimeConverter>()
             .HaveColumnType("timestamp with time zone");
 
+        // EF Core will automatically apply the base value converter for nullable types too.
         configurationBuilder
             .Properties<DateTime?>()
+            .HaveConversion<UtcDateTimeConverter>()
             .HaveColumnType("timestamp with time zone");
     }
 }

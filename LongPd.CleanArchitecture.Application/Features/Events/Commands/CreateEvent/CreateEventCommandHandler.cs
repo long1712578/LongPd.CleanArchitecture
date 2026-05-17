@@ -31,14 +31,13 @@ public sealed class CreateEventCommandHandler(IUnitOfWork unitOfWork)
                 command.TotalCapacity);
 
             await unitOfWork.Events.AddAsync(@event, ct);
-            await unitOfWork.SaveChangesAsync(ct); // audit fields + domain events dispatched here
+            await unitOfWork.SaveChangesAsync(ct);
 
             var response = new CreateEventResponse(@event.Id, @event.Name, @event.IsPublished);
             return Result.Success(response);
         }
         catch (DomainException ex)
         {
-            // Convert domain exceptions to Result.Failure — do NOT leak exceptions to API
             return Result.Failure<CreateEventResponse>(
                 new Error("Event.DomainError", ex.Message));
         }

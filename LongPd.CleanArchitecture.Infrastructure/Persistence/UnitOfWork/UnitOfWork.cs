@@ -12,9 +12,9 @@ namespace LongPd.CleanArchitecture.Infrastructure.Persistence.UnitOfWork;
 /// Coordinates all write-side repositories under a single DB transaction.
 ///
 /// On SaveChangesAsync:
-///   1. Fills audit fields (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy) via ChangeTracker.
-///   2. Saves all changes to DB in one transaction.
-///   3. Dispatches all collected domain events via MediatR IPublisher.
+///   Fills audit fields (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy) via ChangeTracker.
+///   Saves all changes to DB in one transaction.
+///   Dispatches all collected domain events via MediatR IPublisher.
 /// </summary>
 public sealed class UnitOfWork : IUnitOfWork
 {
@@ -42,24 +42,23 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        // Step 1: Fill audit fields before saving
         FillAuditFields();
 
-        // Step 2: Collect domain events from all tracked entities BEFORE saving
+        // Collect domain events from all tracked entities BEFORE saving
         var domainEvents = _context.ChangeTracker
             .Entries<BaseEntity>()
             .Where(e => e.Entity.DomainEvents.Count != 0)
             .SelectMany(e => e.Entity.DomainEvents)
             .ToList();
 
-        // Step 3: Save to database
+        // Save to database
         var result = await _context.SaveChangesAsync(ct);
 
-        // Step 4: Clear domain events (prevent double-dispatch on retry)
+        // Clear domain events (prevent double-dispatch on retry)
         foreach (var entry in _context.ChangeTracker.Entries<BaseEntity>())
             entry.Entity.ClearDomainEvents();
 
-        // Step 5: Dispatch domain events AFTER successful save
+        // Dispatch domain events AFTER successful save
         // Dispatch happens after DB commit so handlers can safely query new state
         foreach (var domainEvent in domainEvents)
             await _publisher.Publish(domainEvent, ct);
