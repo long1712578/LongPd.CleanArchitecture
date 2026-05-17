@@ -29,13 +29,11 @@ public abstract class Repository<TEntity>(AppDbContext context) : IRepository<TE
     {
         if (entity is ISoftDelete softDeletable)
         {
-            // Soft delete — mark as deleted via domain method
-            softDeletable.MarkAsDeleted(DateTime.UtcNow, null); // CreatedBy filled by UnitOfWork
+            softDeletable.MarkAsDeleted(DateTime.UtcNow, null);
             Context.Set<TEntity>().Update(entity);
         }
         else
         {
-            // Hard delete — rare, only for non-ISoftDelete entities
             Context.Set<TEntity>().Remove(entity);
         }
     }

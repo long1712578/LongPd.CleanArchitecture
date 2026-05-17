@@ -11,7 +11,6 @@ namespace LongPd.CleanArchitecture.Domain.Entities;
 /// </summary>
 public sealed class Event : AuditableEntity, ISoftDelete
 {
-    // ─── Properties ──────────────────────────────────────────────────────────
     public string Name { get; private set; } = default!;
     public string Description { get; private set; } = default!;
     public DateTime StartDate { get; private set; }
@@ -25,14 +24,11 @@ public sealed class Event : AuditableEntity, ISoftDelete
     public DateTime? DeletedAt { get; private set; }
     public string? DeletedBy { get; private set; }
 
-    // Navigation — EF Core will populate this
     private readonly List<Ticket> _tickets = [];
     public IReadOnlyCollection<Ticket> Tickets => _tickets.AsReadOnly();
 
-    // ─── Private constructor — EF Core needs parameterless ctor ──────────────
     private Event() { }
 
-    // ─── Factory Method — only valid way to create an Event ──────────────────
     /// <summary>
     /// Creates a new Event. Enforces all invariants at construction time.
     /// Raises EventCreatedDomainEvent.
@@ -73,7 +69,6 @@ public sealed class Event : AuditableEntity, ISoftDelete
         return @event;
     }
 
-    // ─── Domain Methods ───────────────────────────────────────────────────────
     public void Publish()
     {
         if (IsPublished)
@@ -99,7 +94,6 @@ public sealed class Event : AuditableEntity, ISoftDelete
         Venue = venue.Trim();
     }
 
-    // ─── ISoftDelete ──────────────────────────────────────────────────────────
     public void MarkAsDeleted(DateTime deletedAt, string? deletedBy)
     {
         IsDeleted = true;

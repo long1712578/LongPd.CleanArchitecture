@@ -9,7 +9,6 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─── Clean Architecture Layers Registration ──────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -20,11 +19,10 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // Auto-discover and register all Minimal API endpoint definitions
 builder.Services.AddEndpointDefinitions();
 
-// Global Exception Handler (RFC 7807)
+// Global Exception Handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// Add gRPC Services
 builder.Services.AddGrpc();
 
 // Add OpenAPI / Swagger
@@ -32,14 +30,11 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// ─── HTTP Request Pipeline ──────────────────────────────────────────────────
-
 // Global Exception Handling middleware
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
-    // Map OpenAPI JSON endpoint
     app.MapOpenApi();
     
     // Map modern Scalar API Documentation UI (alternative to SwaggerUI)
@@ -53,7 +48,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Enable gRPC-Web support (essential for React/JS browser clients)
+// Enable gRPC-Web support
 app.UseGrpcWeb(new GrpcWebOptions { DefaultEnabled = true });
 
 // Map Minimal API Endpoints

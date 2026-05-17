@@ -18,7 +18,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Auto-discover all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         base.OnModelCreating(modelBuilder);
@@ -26,10 +25,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        // PostgreSQL convention: use snake_case for column names
-        // Handled by Npgsql provider — no manual mapping needed
-
-        // Store all DateTime as UTC in PostgreSQL
         configurationBuilder
             .Properties<DateTime>()
             .HaveColumnType("timestamp with time zone");

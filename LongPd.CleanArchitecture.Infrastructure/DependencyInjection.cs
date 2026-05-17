@@ -22,24 +22,35 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // ─── EF Core (PostgreSQL) ──────────────────────────────────────────────
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("Default"),
                 npgsql => npgsql.MigrationsAssembly(typeof(DependencyInjection).Assembly.FullName)));
 
-        // ─── Unit of Work + Repositories ──────────────────────────────────────
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // ─── Dapper Read Layer ─────────────────────────────────────────────────
         services.AddSingleton<IDbConnectionFactory>(_ =>
             new NpgsqlConnectionFactory(
-                configuration.GetConnectionString("Default")
-                    ?? throw new InvalidOperationException("ConnectionStrings:Default is required.")));
+                configuration.GetConnectionString("Default") ?? throw new InvalidOperationException("ConnectionStrings:Default is required.")));
 
-        // ─── Caching (L1: IMemoryCache) ────────────────────────────────────────
         services.AddMemoryCache();
-        services.AddSingleton<ICacheService, MemoryCacheService>();
+
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrEmpty(redisConnectionString))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "CleanArchitectureApp:";
+            });
+        }
+        else
+        {
+            services.AddDistributedMemoryCache();
+        }
+
+        // Register the HybridCacheService
+        services.AddSingleton<ICacheService, HybridCacheService>();
 
         return services;
     }

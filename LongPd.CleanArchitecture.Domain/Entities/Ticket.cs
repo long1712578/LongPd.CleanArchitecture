@@ -35,13 +35,8 @@ public sealed class Ticket : AuditableEntity, ISoftDelete
     // Navigation
     public Event Event { get; private set; } = default!;
 
-    // ─── Private constructor for EF Core ──────────────────────────────────────
     private Ticket() { }
 
-    // ─── Factory Method ───────────────────────────────────────────────────────
-    /// <summary>
-    /// Creates a new ticket tier for an event.
-    /// </summary>
     public static Ticket Create(Guid eventId, string tierName, Money price, int quantity)
     {
         if (eventId == Guid.Empty)
@@ -67,8 +62,6 @@ public sealed class Ticket : AuditableEntity, ISoftDelete
         ticket.RaiseDomainEvent(new TicketCreatedDomainEvent(ticket.Id, eventId, tierName, quantity));
         return ticket;
     }
-
-    // ─── Domain Methods ───────────────────────────────────────────────────────
 
     /// <summary>
     /// Reserves a number of tickets for a user.
@@ -112,7 +105,6 @@ public sealed class Ticket : AuditableEntity, ISoftDelete
         RaiseDomainEvent(new TicketCancelledDomainEvent(Id, EventId, count, AvailableQuantity));
     }
 
-    // ─── ISoftDelete ──────────────────────────────────────────────────────────
     public void MarkAsDeleted(DateTime deletedAt, string? deletedBy)
     {
         IsDeleted = true;

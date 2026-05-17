@@ -16,13 +16,11 @@ public sealed class MemoryCacheService(
     ILogger<MemoryCacheService> logger)
     : ICacheService
 {
-    // Track all keys by prefix for RemoveByPrefixAsync support
     private static readonly Dictionary<string, HashSet<string>> PrefixIndex = new();
     private static readonly Lock PrefixLock = new();
 
     public Task<T?> GetAsync<T>(string key, CancellationToken ct = default)
     {
-        // Safe cast supporting both value types and reference types without requiring a class constraint
         if (memoryCache.TryGetValue(key, out var cached) && cached is T typedValue)
         {
             logger.LogDebug("[MemoryCache] HIT: {Key}", key);

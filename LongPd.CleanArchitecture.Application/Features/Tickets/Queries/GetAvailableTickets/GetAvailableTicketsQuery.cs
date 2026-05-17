@@ -1,5 +1,6 @@
 using LongPd.CleanArchitecture.Application.Abstractions.Caching;
 using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
+using LongPd.CleanArchitecture.Application.Features.Tickets.Dtos;
 
 namespace LongPd.CleanArchitecture.Application.Features.Tickets.Queries.GetAvailableTickets;
 
@@ -14,12 +15,3 @@ public sealed record GetAvailableTicketsQuery(Guid EventId)
     public string CacheKey => $"ticket:available:{EventId}";
     public TimeSpan? Expiry => TimeSpan.FromSeconds(30); // Short TTL — availability changes frequently
 }
-
-public sealed record AvailableTicketResponse(
-    Guid Id,
-    Guid EventId,
-    string TierName,
-    decimal Price,
-    string Currency,
-    int AvailableQuantity,
-    bool IsAvailable);

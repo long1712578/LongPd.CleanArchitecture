@@ -1,4 +1,5 @@
 using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
+using LongPd.CleanArchitecture.Application.Features.Tickets.Dtos;
 
 namespace LongPd.CleanArchitecture.Application.Features.Tickets.Commands.ReserveTicket;
 
@@ -10,11 +11,3 @@ public sealed record ReserveTicketCommand(
     Guid TicketId,
     int Count,
     string UserId) : ICommand<ReserveTicketResponse>;
-
-public sealed record ReserveTicketResponse(
-    Guid TicketId,
-    Guid EventId,
-    int ReservedCount,
-    int RemainingQuantity,
-    decimal TotalPrice,
-    string Currency);

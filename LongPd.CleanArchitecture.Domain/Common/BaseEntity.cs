@@ -11,18 +11,9 @@ public abstract class BaseEntity
 
     private readonly List<IDomainEvent> _domainEvents = [];
 
-    /// <summary>
-    /// Read-only snapshot of pending domain events.
-    /// Events are dispatched by UnitOfWork AFTER SaveChangesAsync succeeds.
-    /// </summary>
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    protected void RaiseDomainEvent(IDomainEvent domainEvent)
-        => _domainEvents.Add(domainEvent);
+    protected void RaiseDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
 
-    /// <summary>
-    /// Called by UnitOfWork after events have been dispatched.
-    /// Prevents double-dispatch on retry scenarios.
-    /// </summary>
     public void ClearDomainEvents() => _domainEvents.Clear();
 }

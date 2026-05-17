@@ -15,7 +15,6 @@ public static class DependencyInjection
     {
         var assembly = typeof(DependencyInjection).Assembly;
 
-        // MediatR — register all Handlers, Behaviors in order
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(assembly);

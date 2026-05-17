@@ -14,16 +14,11 @@ public static class ResultExtensions
     /// Success → 200 OK with value.
     /// Failure → appropriate HTTP error based on error code.
     /// </summary>
-    public static IResult ToHttpResult<T>(this Result<T> result)
-        => result.Match(
-            onSuccess: value => Results.Ok(value),
-            onFailure: error => error.ToHttpError());
+    public static IResult ToHttpResult<T>(this Result<T> result) => result.Match(onSuccess: value => Results.Ok(value), onFailure: error => error.ToHttpError());
 
     /// <summary>Maps Result (no value) — Success → 204 No Content.</summary>
     public static IResult ToHttpResult(this Result result)
-        => result.IsSuccess
-            ? Results.NoContent()
-            : result.Error.ToHttpError();
+        => result.IsSuccess ? Results.NoContent() : result.Error.ToHttpError();
 
     /// <summary>Success → 201 Created with location header and body.</summary>
     public static IResult ToCreatedResult<T>(this Result<T> result, string routePattern, Func<T, object> getRouteValues)

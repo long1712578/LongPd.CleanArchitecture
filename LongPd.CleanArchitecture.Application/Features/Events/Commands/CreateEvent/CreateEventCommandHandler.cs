@@ -1,5 +1,6 @@
 using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
 using LongPd.CleanArchitecture.Application.Common;
+using LongPd.CleanArchitecture.Application.Features.Events.Dtos;
 using LongPd.CleanArchitecture.Domain.Entities;
 using LongPd.CleanArchitecture.Domain.Exceptions;
 using LongPd.CleanArchitecture.Domain.Interfaces;

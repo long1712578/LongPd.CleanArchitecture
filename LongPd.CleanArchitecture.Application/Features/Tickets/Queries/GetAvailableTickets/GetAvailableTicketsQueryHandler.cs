@@ -2,6 +2,7 @@ using Dapper;
 using LongPd.CleanArchitecture.Application.Abstractions.Data;
 using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
 using LongPd.CleanArchitecture.Application.Common;
+using LongPd.CleanArchitecture.Application.Features.Tickets.Dtos;
 
 namespace LongPd.CleanArchitecture.Application.Features.Tickets.Queries.GetAvailableTickets;
 

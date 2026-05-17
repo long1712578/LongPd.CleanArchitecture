@@ -67,8 +67,7 @@ public sealed class UnitOfWork : IUnitOfWork
         return result;
     }
 
-    public async Task BeginTransactionAsync(CancellationToken ct = default)
-        => _currentTransaction = await _context.Database.BeginTransactionAsync(ct);
+    public async Task BeginTransactionAsync(CancellationToken ct = default) => _currentTransaction = await _context.Database.BeginTransactionAsync(ct);
 
     public async Task CommitTransactionAsync(CancellationToken ct = default)
     {
@@ -89,7 +88,6 @@ public sealed class UnitOfWork : IUnitOfWork
         _currentTransaction = null;
     }
 
-    // ─── Private: Audit Fields via ChangeTracker ─────────────────────────────
     private void FillAuditFields()
     {
         var now = DateTime.UtcNow;

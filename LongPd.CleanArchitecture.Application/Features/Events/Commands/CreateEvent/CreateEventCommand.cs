@@ -1,4 +1,5 @@
 using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
+using LongPd.CleanArchitecture.Application.Features.Events.Dtos;
 
 namespace LongPd.CleanArchitecture.Application.Features.Events.Commands.CreateEvent;
 
@@ -13,6 +14,3 @@ public sealed record CreateEventCommand(
     DateTime EndDate,
     string Venue,
     int TotalCapacity) : ICommand<CreateEventResponse>;
-
-/// <summary>Response DTO — only essential fields returned on creation.</summary>
-public sealed record CreateEventResponse(Guid Id, string Name, bool IsPublished);
