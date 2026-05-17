@@ -1,0 +1,42 @@
+name: Build, Test & Deploy Scalar Docs
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allows manual trigger
+
+permissions:
+  contents: write # Required to push to gh-pages branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore LongPd.CleanArchitecture.slnx
+
+      - name: Build Solution (Generates openapi.json)
+        run: dotnet build LongPd.CleanArchitecture.slnx --configuration Release
+
+      - name: Verify generated OpenAPI file
+        run: |
+          ls -la LongPd.CleanArchitecture.Api/wwwroot/
+          # Ensure openapi.json exists
+          test -f LongPd.CleanArchitecture.Api/wwwroot/openapi.json
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: LongPd.CleanArchitecture.Api/wwwroot
+          branch: gh-pages # The branch where docs will be hosted

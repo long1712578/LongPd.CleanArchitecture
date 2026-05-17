@@ -5,6 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    
+    <!-- Enable build-time OpenAPI document generation in .NET 9 -->
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/wwwroot</OpenApiDocumentsDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +16,12 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.5.4" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.68.1" />
     <PackageReference Include="Grpc.AspNetCore.Web" Version="2.68.1" />
+    
+    <!-- Package needed for build-time OpenAPI json extraction -->
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="9.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
