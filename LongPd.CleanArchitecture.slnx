@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="LongPd.CleanArchitecture.Api/LongPd.CleanArchitecture.Api.csproj" />
+  <Project Path="LongPd.CleanArchitecture.Application/LongPd.CleanArchitecture.Application.csproj" />
+  <Project Path="LongPd.CleanArchitecture.Domain/LongPd.CleanArchitecture.Domain.csproj" />
+  <Project Path="LongPd.CleanArchitecture.Infrastructure/LongPd.CleanArchitecture.Infrastructure.csproj" />
+</Solution>

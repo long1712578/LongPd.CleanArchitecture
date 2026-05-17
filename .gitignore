@@ -7,6 +7,22 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# Visual Studio / local IDE files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.csproj.user
+*.vsidx
+DocumentLayout.json
+CodeChunks.db
+CodeChunks.db-shm
+CodeChunks.db-wal
+SemanticSymbols.db
+SemanticSymbols.db-shm
+SemanticSymbols.db-wal
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
