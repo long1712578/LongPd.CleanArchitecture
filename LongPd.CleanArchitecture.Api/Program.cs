@@ -15,6 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add OpenTelemetry for Jaeger (Tracing) and Prometheus (Metrics)
+builder.AddOpenTelemetryObservability();
+
 // ─── API Presentation Layer Concerns ───────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -103,6 +106,9 @@ app.UseCors("AllowAll");
 
 // Enable gRPC-Web support
 app.UseGrpcWeb(new GrpcWebOptions { DefaultEnabled = true });
+
+// Map Prometheus scraping endpoint for Grafana
+app.MapPrometheusScrapingEndpoint();
 
 // Enable Rate Limiting
 app.UseRateLimiter();

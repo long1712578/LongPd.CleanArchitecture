@@ -181,7 +181,7 @@ namespace LongPd.CleanArchitecture.Infrastructure.Migrations
 
                             b1.HasKey("TicketId");
 
-                            b1.ToTable("Tickets");
+                            b1.ToTable("Tickets", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("TicketId");

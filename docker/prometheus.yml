@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'clean_architecture_api'
+    static_configs:
+      - targets: ['host.docker.internal:5000'] # Assuming the API runs on port 5000 on the host
