@@ -19,10 +19,12 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(assembly);
 
-            // Pipeline order matters: Logging → Validation → Caching → Handler
+            // Pipeline order matters: Idempotency → Logging → Validation → Caching → CacheInvalidation → Handler
+            cfg.AddOpenBehavior(typeof(IdempotencyBehavior<,>));
             cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
             cfg.AddOpenBehavior(typeof(CachingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(CacheInvalidationBehavior<,>));
         });
 
         // FluentValidation — auto-discover all AbstractValidator<T> in this assembly

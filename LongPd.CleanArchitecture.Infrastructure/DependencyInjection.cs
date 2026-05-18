@@ -3,6 +3,7 @@ using LongPd.CleanArchitecture.Application.Abstractions.Data;
 using LongPd.CleanArchitecture.Domain.Interfaces;
 using LongPd.CleanArchitecture.Infrastructure.Caching;
 using LongPd.CleanArchitecture.Infrastructure.Data;
+using LongPd.CleanArchitecture.Infrastructure.Health;
 using LongPd.CleanArchitecture.Infrastructure.Persistence;
 using LongPd.CleanArchitecture.Infrastructure.Persistence.Repositories;
 using LongPd.CleanArchitecture.Infrastructure.Persistence.UnitOfWork;
@@ -52,6 +53,12 @@ public static class DependencyInjection
         // Register the HybridCacheService
         services.AddSingleton<ICacheService, HybridCacheService>();
 
+        // ─── Health Checks ─────────────────────────────────────────────────
+        services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("postgresql", tags: ["ready", "db"])
+            .AddCheck<CacheHealthCheck>("cache", tags: ["ready", "cache"]);
+
         return services;
     }
 }
+

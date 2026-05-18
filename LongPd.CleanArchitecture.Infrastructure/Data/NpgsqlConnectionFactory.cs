@@ -14,10 +14,10 @@ namespace LongPd.CleanArchitecture.Infrastructure.Data;
 /// </summary>
 public sealed class NpgsqlConnectionFactory(string connectionString) : IDbConnectionFactory
 {
-    public IDbConnection Create()
+    public async Task<IDbConnection> CreateAsync(CancellationToken ct = default)
     {
         var connection = new NpgsqlConnection(connectionString);
-        connection.Open(); // Open immediately — Dapper expects an open connection
+        await connection.OpenAsync(ct); // Open asynchronously — Dapper expects an open connection
         return connection;
     }
 }

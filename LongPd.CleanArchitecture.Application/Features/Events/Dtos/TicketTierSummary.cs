@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace LongPd.CleanArchitecture.Application.Features.Events.Dtos;
 
-namespace LongPd.CleanArchitecture.Application.Features.Events.Dtos
-{
-    public sealed record TicketTierSummary(
+/// <summary>
+/// Summary of a single ticket tier - used inside EventDetailResponse.
+/// </summary>
+public sealed record TicketTierSummary(
     Guid Id,
     string TierName,
     decimal Price,
@@ -14,4 +11,3 @@ namespace LongPd.CleanArchitecture.Application.Features.Events.Dtos
     int TotalQuantity,
     int AvailableQuantity,
     string Status);
-}

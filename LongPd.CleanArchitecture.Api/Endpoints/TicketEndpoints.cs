@@ -4,6 +4,7 @@ using LongPd.CleanArchitecture.Application.Features.Tickets.Commands.CancelTicke
 using LongPd.CleanArchitecture.Application.Features.Tickets.Queries.GetAvailableTickets;
 using MediatR;
 using LongPd.CleanArchitecture.Application.Features.Tickets.Dtos;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LongPd.CleanArchitecture.Api.Endpoints;
 
@@ -27,6 +28,7 @@ public sealed class TicketEndpoints : IEndpointDefinition
         group.MapPost("/reserve", ReserveTicketAsync)
             .WithName("ReserveTicket")
             .WithSummary("Reserve tickets — Flash Sale hot path with optimistic concurrency.")
+            .RequireRateLimiting("HotPath")
             .Produces<ReserveTicketResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
@@ -54,6 +56,7 @@ public sealed class TicketEndpoints : IEndpointDefinition
 
     private static async Task<IResult> ReserveTicketAsync(
         ReserveTicketRequest request,
+        [FromHeader(Name = "X-Idempotency-Key")] Guid? headerIdempotencyKey,
         ISender sender,
         IHttpContextAccessor httpContextAccessor,
         CancellationToken ct)
@@ -62,7 +65,10 @@ public sealed class TicketEndpoints : IEndpointDefinition
             .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
             ?? "anonymous";
 
-        var command = new ReserveTicketCommand(request.TicketId, request.Count, userId);
+        // Use header if provided, otherwise fallback to request body RequestId (if any), otherwise generate new
+        var requestId = headerIdempotencyKey ?? request.RequestId ?? Guid.NewGuid();
+
+        var command = new ReserveTicketCommand(requestId, request.TicketId, request.Count, userId);
         var result = await sender.Send(command, ct);
         return result.ToHttpResult();
     }
@@ -79,5 +85,5 @@ public sealed class TicketEndpoints : IEndpointDefinition
 }
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
-public sealed record ReserveTicketRequest(Guid TicketId, int Count);
+public sealed record ReserveTicketRequest(Guid TicketId, int Count, Guid? RequestId = null);
 public sealed record CancelTicketRequest(Guid TicketId, int Count);

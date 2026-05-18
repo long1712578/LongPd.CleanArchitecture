@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using LongPd.CleanArchitecture.Application.Abstractions.Caching;
 using Microsoft.Extensions.Caching.Distributed;
@@ -13,6 +14,7 @@ namespace LongPd.CleanArchitecture.Infrastructure.Caching;
 ///
 /// Features:
 ///   - Graceful fallback: If L2 is unavailable or connection fails, falls back to L1 only.
+///   - Thread-safe prefix tracking using ConcurrentDictionary.
 ///   - Prevention of cache stampede (double-fetching on concurrent misses).
 /// </summary>
 public sealed class HybridCacheService(
@@ -21,8 +23,13 @@ public sealed class HybridCacheService(
     ILogger<HybridCacheService> logger)
     : ICacheService
 {
-    private static readonly Dictionary<string, HashSet<string>> L1PrefixIndex = new();
-    private static readonly Lock PrefixLock = new();
+    /// <summary>
+    /// Thread-safe prefix index: maps prefix → set of full cache keys.
+    /// Uses ConcurrentDictionary for lock-free reads and safe concurrent writes.
+    /// Inner dictionary uses byte as dummy value (acts as a concurrent HashSet).
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> PrefixIndex = new();
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -47,7 +54,7 @@ public sealed class HybridCacheService(
                 {
                     logger.LogDebug("[HybridCache] L2 HIT: {Key}. Writing back to L1.", key);
                     memoryCache.Set(key, value, TimeSpan.FromMinutes(5));
-                    TrackL1Prefix(key);
+                    TrackPrefix(key);
 
                     return value;
                 }
@@ -71,7 +78,7 @@ public sealed class HybridCacheService(
         var ttl = expiry ?? TimeSpan.FromMinutes(5);
 
         memoryCache.Set(key, value, ttl);
-        TrackL1Prefix(key);
+        TrackPrefix(key);
         try
         {
             var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions);
@@ -92,6 +99,7 @@ public sealed class HybridCacheService(
     public async Task RemoveAsync(string key, CancellationToken ct = default)
     {
         memoryCache.Remove(key);
+        UntrackKey(key);
         try
         {
             await distributedCache.RemoveAsync(key, ct);
@@ -105,26 +113,27 @@ public sealed class HybridCacheService(
 
     public async Task RemoveByPrefixAsync(string prefix, CancellationToken ct = default)
     {
-        List<string> keysToRemove;
-        lock (PrefixLock)
+        // Collect all keys matching the prefix
+        var keysToRemove = new List<string>();
+
+        foreach (var kvp in PrefixIndex)
         {
-            if (L1PrefixIndex.TryGetValue(prefix, out var keys))
+            if (kvp.Key.StartsWith(prefix, StringComparison.Ordinal))
             {
-                keysToRemove = [.. keys];
-                L1PrefixIndex.Remove(prefix);
-            }
-            else
-            {
-                keysToRemove = [];
+                keysToRemove.AddRange(kvp.Value.Keys);
+                PrefixIndex.TryRemove(kvp.Key, out _);
             }
         }
 
+        // Remove from L1
         foreach (var key in keysToRemove)
         {
             memoryCache.Remove(key);
         }
 
         logger.LogDebug("[HybridCache] Invalidated {Count} keys in L1 for prefix: {Prefix}", keysToRemove.Count, prefix);
+
+        // Remove from L2
         foreach (var key in keysToRemove)
         {
             try
@@ -138,17 +147,22 @@ public sealed class HybridCacheService(
         }
     }
 
-    private static void TrackL1Prefix(string key)
+    private static void TrackPrefix(string key)
     {
         var prefix = ExtractPrefix(key);
-        lock (PrefixLock)
+        var keys = PrefixIndex.GetOrAdd(prefix, _ => new ConcurrentDictionary<string, byte>());
+        keys.TryAdd(key, 0);
+    }
+
+    private static void UntrackKey(string key)
+    {
+        var prefix = ExtractPrefix(key);
+        if (PrefixIndex.TryGetValue(prefix, out var keys))
         {
-            if (!L1PrefixIndex.TryGetValue(prefix, out var keys))
-            {
-                keys = [];
-                L1PrefixIndex[prefix] = keys;
-            }
-            keys.Add(key);
+            keys.TryRemove(key, out _);
+            // Clean up empty prefix entries to prevent memory leaks
+            if (keys.IsEmpty)
+                PrefixIndex.TryRemove(prefix, out _);
         }
     }
 
@@ -158,3 +172,4 @@ public sealed class HybridCacheService(
         return parts.Length >= 2 ? $"{parts[0]}:{parts[1]}" : key;
     }
 }
+
