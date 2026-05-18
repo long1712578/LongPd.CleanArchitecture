@@ -6,6 +6,9 @@ public sealed class ReserveTicketCommandValidator : AbstractValidator<ReserveTic
 {
     public ReserveTicketCommandValidator()
     {
+        RuleFor(x => x.RequestId)
+            .NotEmpty().WithMessage("RequestId is required for idempotency.");
+
         RuleFor(x => x.TicketId)
             .NotEmpty().WithMessage("TicketId is required.");
 

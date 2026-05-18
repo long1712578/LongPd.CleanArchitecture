@@ -32,7 +32,7 @@ public sealed class GetAvailableTicketsQueryHandler(IDbConnectionFactory dbConne
             ORDER BY t."PriceAmount" ASC
             """;
 
-        using var connection = dbConnectionFactory.Create();
+        using var connection = await dbConnectionFactory.CreateAsync(ct);
 
         var results = await connection.QueryAsync<AvailableTicketResponse>(
             sql,

@@ -2,13 +2,13 @@ using LongPd.CleanArchitecture.Application.Abstractions.Messaging;
 using LongPd.CleanArchitecture.Application.Common;
 using LongPd.CleanArchitecture.Domain.Exceptions;
 using LongPd.CleanArchitecture.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace LongPd.CleanArchitecture.Application.Features.Tickets.Commands.CancelTicket;
 
 /// <summary>
 /// Handles CancelTicketCommand.
 /// Protected by Optimistic Concurrency (RowVersion/xmin) during SaveChangesAsync.
+/// UnitOfWork translates DB-level concurrency exceptions → ConcurrencyException.
 /// </summary>
 public sealed class CancelTicketCommandHandler(IUnitOfWork unitOfWork)
     : ICommandHandler<CancelTicketCommand>
@@ -33,7 +33,7 @@ public sealed class CancelTicketCommandHandler(IUnitOfWork unitOfWork)
         {
             return Result.Failure(new Error("Ticket.DomainError", ex.Message));
         }
-        catch (DbUpdateConcurrencyException)
+        catch (ConcurrencyException)
         {
             return Result.Failure(Error.Ticket.ConcurrencyConflict);
         }

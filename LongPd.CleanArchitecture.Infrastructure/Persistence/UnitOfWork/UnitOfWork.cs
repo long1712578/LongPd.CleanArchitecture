@@ -1,8 +1,10 @@
 using LongPd.CleanArchitecture.Application.Abstractions.Services;
+using LongPd.CleanArchitecture.Application.Common;
 using LongPd.CleanArchitecture.Domain.Common;
 using LongPd.CleanArchitecture.Domain.Interfaces;
 using LongPd.CleanArchitecture.Infrastructure.Persistence.Repositories;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LongPd.CleanArchitecture.Infrastructure.Persistence.UnitOfWork;
@@ -15,6 +17,7 @@ namespace LongPd.CleanArchitecture.Infrastructure.Persistence.UnitOfWork;
 ///   Fills audit fields (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy) via ChangeTracker.
 ///   Saves all changes to DB in one transaction.
 ///   Dispatches all collected domain events via MediatR IPublisher.
+///   Translates DbUpdateConcurrencyException → Application-level ConcurrencyException.
 /// </summary>
 public sealed class UnitOfWork : IUnitOfWork
 {
@@ -51,8 +54,19 @@ public sealed class UnitOfWork : IUnitOfWork
             .SelectMany(e => e.Entity.DomainEvents)
             .ToList();
 
-        // Save to database
-        var result = await _context.SaveChangesAsync(ct);
+        int result;
+        try
+        {
+            // Save to database
+            result = await _context.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Translate EF Core exception → Application-level abstraction.
+            // This keeps the Application layer free from EF Core dependencies.
+            throw new ConcurrencyException(
+                "A concurrency conflict occurred. The resource was modified by another request.", ex);
+        }
 
         // Clear domain events (prevent double-dispatch on retry)
         foreach (var entry in _context.ChangeTracker.Entries<BaseEntity>())
@@ -96,11 +110,11 @@ public sealed class UnitOfWork : IUnitOfWork
         {
             switch (entry.State)
             {
-                case Microsoft.EntityFrameworkCore.EntityState.Added:
+                case EntityState.Added:
                     entry.Entity.SetCreatedAudit(now, userId);
                     break;
 
-                case Microsoft.EntityFrameworkCore.EntityState.Modified:
+                case EntityState.Modified:
                     entry.Entity.SetUpdatedAudit(now, userId);
                     break;
             }

@@ -4,15 +4,13 @@ option csharp_namespace = "LongPd.CleanArchitecture.Api.Grpc";
 
 package ticket;
 
-// ─── Ticket gRPC Service ───────────────────────────────────────────────────────
+// Ticket gRPC Service
 // Provides server-streaming for real-time ticket availability updates.
 // Used by React client (via gRPC-Web) to show live remaining ticket count.
 service TicketGrpcService {
   // Stream ticket availability updates for a specific event.
   // Server pushes updates whenever a TicketReservedDomainEvent or TicketCancelledDomainEvent fires.
   rpc StreamAvailability (StreamAvailabilityRequest) returns (stream AvailabilityUpdate);
-
-  // One-time RPC to get current availability snapshot
   rpc GetCurrentAvailability (GetAvailabilityRequest) returns (AvailabilitySnapshot);
 }
 
@@ -32,7 +30,7 @@ message AvailabilityUpdate {
   int32 available_quantity = 4;
   int32 total_quantity = 5;
   bool is_sold_out = 6;
-  string updated_at = 7; // ISO 8601
+  string updated_at = 7;
 }
 
 message AvailabilitySnapshot {

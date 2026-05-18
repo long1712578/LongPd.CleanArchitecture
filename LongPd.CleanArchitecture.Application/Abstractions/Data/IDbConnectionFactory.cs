@@ -10,8 +10,8 @@ namespace LongPd.CleanArchitecture.Application.Abstractions.Data;
 public interface IDbConnectionFactory
 {
     /// <summary>
-    /// Creates and returns an open IDbConnection.
+    /// Creates and returns an asynchronously opened IDbConnection.
     /// Caller is responsible for disposing (use 'using var connection = ...')
     /// </summary>
-    IDbConnection Create();
+    Task<IDbConnection> CreateAsync(CancellationToken ct = default);
 }

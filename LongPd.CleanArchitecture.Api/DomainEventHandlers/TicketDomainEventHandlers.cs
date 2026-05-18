@@ -1,4 +1,4 @@
-using LongPd.CleanArchitecture.Api.Grpc;
+using LongPd.CleanArchitecture.Application.Abstractions.Notifications;
 using LongPd.CleanArchitecture.Domain.Events;
 using MediatR;
 
@@ -6,12 +6,14 @@ namespace LongPd.CleanArchitecture.Api.DomainEventHandlers;
 
 /// <summary>
 /// Handles TicketReservedDomainEvent — bridges domain events to gRPC streaming.
-/// When a ticket is reserved, this handler pushes real-time updates to all
-/// connected React clients streaming via gRPC-Web.
+/// When a ticket is reserved, pushes real-time availability updates to all
+/// connected React clients via gRPC-Web.
 ///
 /// MediatR dispatches this AFTER SaveChangesAsync (from UnitOfWork).
 /// </summary>
-public sealed class TicketReservedDomainEventHandler(ILogger<TicketReservedDomainEventHandler> logger)
+public sealed class TicketReservedDomainEventHandler(
+    ITicketAvailabilityNotifier notifier,
+    ILogger<TicketReservedDomainEventHandler> logger)
     : INotificationHandler<TicketReservedDomainEvent>
 {
     public async Task Handle(TicketReservedDomainEvent notification, CancellationToken ct)
@@ -20,25 +22,23 @@ public sealed class TicketReservedDomainEventHandler(ILogger<TicketReservedDomai
             "[DomainEvent] TicketReserved — TicketId: {TicketId}, Remaining: {Remaining}",
             notification.TicketId, notification.RemainingQuantity);
 
-        var update = new AvailabilityUpdate
-        {
-            TicketId = notification.TicketId.ToString(),
-            EventId = notification.EventId.ToString(),
-            TierName = string.Empty, // Will be populated by snapshot query
-            AvailableQuantity = notification.RemainingQuantity,
-            TotalQuantity = 0, // Populated by snapshot
-            IsSoldOut = notification.RemainingQuantity == 0,
-            UpdatedAt = DateTime.UtcNow.ToString("O")
-        };
-
-        await TicketGrpcServiceImpl.PushAvailabilityUpdate(notification.EventId, update);
+        await notifier.NotifyAvailabilityChangedAsync(new TicketAvailabilityChangedNotification(
+            notification.TicketId,
+            notification.EventId,
+            notification.TierName,
+            notification.RemainingQuantity,
+            notification.TotalQuantity,
+            IsSoldOut: notification.RemainingQuantity == 0,
+            UpdatedAt: DateTime.UtcNow), ct);
     }
 }
 
 /// <summary>
-/// Handles TicketCancelledDomainEvent — pushes availability restored update to clients.
+/// Handles TicketCancelledDomainEvent — pushes availability restored update to all connected clients.
 /// </summary>
-public sealed class TicketCancelledDomainEventHandler(ILogger<TicketCancelledDomainEventHandler> logger)
+public sealed class TicketCancelledDomainEventHandler(
+    ITicketAvailabilityNotifier notifier,
+    ILogger<TicketCancelledDomainEventHandler> logger)
     : INotificationHandler<TicketCancelledDomainEvent>
 {
     public async Task Handle(TicketCancelledDomainEvent notification, CancellationToken ct)
@@ -47,17 +47,13 @@ public sealed class TicketCancelledDomainEventHandler(ILogger<TicketCancelledDom
             "[DomainEvent] TicketCancelled — TicketId: {TicketId}, Restored: {Remaining}",
             notification.TicketId, notification.RemainingQuantity);
 
-        var update = new AvailabilityUpdate
-        {
-            TicketId = notification.TicketId.ToString(),
-            EventId = notification.EventId.ToString(),
-            TierName = string.Empty,
-            AvailableQuantity = notification.RemainingQuantity,
-            TotalQuantity = 0,
-            IsSoldOut = false,
-            UpdatedAt = DateTime.UtcNow.ToString("O")
-        };
-
-        await TicketGrpcServiceImpl.PushAvailabilityUpdate(notification.EventId, update);
+        await notifier.NotifyAvailabilityChangedAsync(new TicketAvailabilityChangedNotification(
+            notification.TicketId,
+            notification.EventId,
+            notification.TierName,
+            notification.RemainingQuantity,
+            notification.TotalQuantity,
+            IsSoldOut: false,
+            UpdatedAt: DateTime.UtcNow), ct);
     }
 }

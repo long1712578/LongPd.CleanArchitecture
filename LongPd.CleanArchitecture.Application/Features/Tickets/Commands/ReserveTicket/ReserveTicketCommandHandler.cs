@@ -3,7 +3,6 @@ using LongPd.CleanArchitecture.Application.Common;
 using LongPd.CleanArchitecture.Application.Features.Tickets.Dtos;
 using LongPd.CleanArchitecture.Domain.Exceptions;
 using LongPd.CleanArchitecture.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace LongPd.CleanArchitecture.Application.Features.Tickets.Commands.ReserveTicket;
 
@@ -13,8 +12,8 @@ namespace LongPd.CleanArchitecture.Application.Features.Tickets.Commands.Reserve
 /// Concurrency strategy:
 ///   1. Fetch ticket with tracking (EF Core).
 ///   2. Call ticket.Reserve() — domain validates availability.
-///   3. SaveChangesAsync — EF Core checks RowVersion (optimistic concurrency).
-///   4. On DbUpdateConcurrencyException — return conflict error (client must retry).
+///   3. SaveChangesAsync — UnitOfWork checks RowVersion (optimistic concurrency).
+///   4. On ConcurrencyException — return conflict error (client must retry).
 ///
 /// This means NO pessimistic locking (no SELECT FOR UPDATE) at application level.
 /// The RowVersion check at DB level prevents overselling with minimal lock contention.
@@ -36,7 +35,7 @@ public sealed class ReserveTicketCommandHandler(IUnitOfWork unitOfWork)
             // Domain entity enforces all business rules
             ticket.Reserve(command.Count);
 
-            // EF Core detects RowVersion mismatch → throws DbUpdateConcurrencyException
+            // UnitOfWork detects RowVersion mismatch → throws ConcurrencyException
             await unitOfWork.SaveChangesAsync(ct);
 
             var response = new ReserveTicketResponse(
@@ -54,7 +53,7 @@ public sealed class ReserveTicketCommandHandler(IUnitOfWork unitOfWork)
             return Result.Failure<ReserveTicketResponse>(
                 new Error("Ticket.DomainError", ex.Message));
         }
-        catch (DbUpdateConcurrencyException)
+        catch (ConcurrencyException)
         {
             // Thundering herd: another request reserved tickets simultaneously
             return Result.Failure<ReserveTicketResponse>(Error.Ticket.ConcurrencyConflict);

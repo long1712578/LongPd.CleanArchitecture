@@ -1,13 +1,9 @@
-﻿using LongPd.CleanArchitecture.Application.Features.Events.Queries.GetEventById;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace LongPd.CleanArchitecture.Application.Features.Events.Dtos;
 
-namespace LongPd.CleanArchitecture.Application.Features.Events.Dtos
-{
-    public sealed record EventDetailResponse(
+/// <summary>
+/// Full event detail including ticket tiers - returned by GetEventByIdQuery.
+/// </summary>
+public sealed record EventDetailResponse(
     Guid Id,
     string Name,
     string Description,
@@ -19,4 +15,3 @@ namespace LongPd.CleanArchitecture.Application.Features.Events.Dtos
     DateTime CreatedAt,
     string? CreatedBy,
     IReadOnlyList<TicketTierSummary> TicketTiers);
-}

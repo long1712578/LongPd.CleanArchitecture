@@ -184,6 +184,16 @@
         ],
         "summary": "Reserve tickets — Flash Sale hot path with optimistic concurrency.",
         "operationId": "ReserveTicket",
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -514,6 +524,12 @@
           "count": {
             "type": "integer",
             "format": "int32"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "default": null,
+            "nullable": true
           }
         }
       },

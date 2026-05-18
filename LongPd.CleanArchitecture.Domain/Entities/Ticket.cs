@@ -85,7 +85,7 @@ public sealed class Ticket : AuditableEntity, ISoftDelete
         if (AvailableQuantity == 0)
             Status = TicketStatus.Sold;
 
-        RaiseDomainEvent(new TicketReservedDomainEvent(Id, EventId, count, AvailableQuantity));
+        RaiseDomainEvent(new TicketReservedDomainEvent(Id, EventId, TierName, count, AvailableQuantity, TotalQuantity));
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public sealed class Ticket : AuditableEntity, ISoftDelete
         AvailableQuantity += count;
         Status = TicketStatus.Available;
 
-        RaiseDomainEvent(new TicketCancelledDomainEvent(Id, EventId, count, AvailableQuantity));
+        RaiseDomainEvent(new TicketCancelledDomainEvent(Id, EventId, TierName, count, AvailableQuantity, TotalQuantity));
     }
 
     public void MarkAsDeleted(DateTime deletedAt, string? deletedBy)

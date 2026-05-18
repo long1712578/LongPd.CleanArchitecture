@@ -34,7 +34,7 @@ public sealed class GetEventByIdQueryHandler(IDbConnectionFactory dbConnectionFa
             WHERE e."Id" = @EventId AND e."IsDeleted" = false
             """;
 
-        using var connection = dbConnectionFactory.Create();
+        using var connection = await dbConnectionFactory.CreateAsync(ct);
 
         // Multi-mapping: join Event + Ticket rows
         var eventDictionary = new Dictionary<Guid, (EventRow Event, List<TicketRow> Tickets)>();
