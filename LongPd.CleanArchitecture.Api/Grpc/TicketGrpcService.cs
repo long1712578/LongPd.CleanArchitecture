@@ -18,9 +18,7 @@ namespace LongPd.CleanArchitecture.Api.Grpc;
 /// Thread safety: Uses ConcurrentDictionary with immutable snapshot pattern
 /// to safely manage concurrent stream subscriptions and broadcasts.
 /// </summary>
-public sealed class TicketGrpcServiceImpl(
-    IDbConnectionFactory dbConnectionFactory,
-    ILogger<TicketGrpcServiceImpl> logger)
+public sealed class TicketGrpcServiceImpl(IDbConnectionFactory dbConnectionFactory, ILogger<TicketGrpcServiceImpl> logger)
     : TicketGrpcService.TicketGrpcServiceBase, ITicketAvailabilityNotifier
 {
     /// <summary>
@@ -31,9 +29,7 @@ public sealed class TicketGrpcServiceImpl(
     private static readonly ConcurrentDictionary<Guid, ImmutableList<IServerStreamWriter<AvailabilityUpdate>>> ActiveStreams = new();
 
     /// <inheritdoc />
-    public async Task NotifyAvailabilityChangedAsync(
-        TicketAvailabilityChangedNotification notification,
-        CancellationToken ct = default)
+    public async Task NotifyAvailabilityChangedAsync(TicketAvailabilityChangedNotification notification, CancellationToken ct = default)
     {
         var update = new AvailabilityUpdate
         {
@@ -53,10 +49,7 @@ public sealed class TicketGrpcServiceImpl(
     /// Server-streaming RPC — keeps connection open and pushes updates.
     /// Client subscribes once, receives updates until it disconnects.
     /// </summary>
-    public override async Task StreamAvailability(
-        StreamAvailabilityRequest request,
-        IServerStreamWriter<AvailabilityUpdate> responseStream,
-        ServerCallContext context)
+    public override async Task StreamAvailability(StreamAvailabilityRequest request, IServerStreamWriter<AvailabilityUpdate> responseStream, ServerCallContext context)
     {
         if (!Guid.TryParse(request.EventId, out var eventId))
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid EventId format."));
@@ -64,10 +57,7 @@ public sealed class TicketGrpcServiceImpl(
         logger.LogInformation("[gRPC] Client subscribed to availability stream for EventId: {EventId}", eventId);
 
         // Register this stream atomically
-        ActiveStreams.AddOrUpdate(
-            eventId,
-            _ => ImmutableList.Create(responseStream),
-            (_, existing) => existing.Add(responseStream));
+        ActiveStreams.AddOrUpdate(eventId,_ => ImmutableList.Create(responseStream), (_, existing) => existing.Add(responseStream));
 
         // Send initial snapshot so client has data immediately
         var snapshot = await GetCurrentSnapshotAsync(eventId, context.CancellationToken);
@@ -86,10 +76,7 @@ public sealed class TicketGrpcServiceImpl(
         finally
         {
             // Unregister this stream atomically
-            ActiveStreams.AddOrUpdate(
-                eventId,
-                _ => ImmutableList<IServerStreamWriter<AvailabilityUpdate>>.Empty,
-                (_, existing) => existing.Remove(responseStream));
+            ActiveStreams.AddOrUpdate(eventId, _ => ImmutableList<IServerStreamWriter<AvailabilityUpdate>>.Empty, (_, existing) => existing.Remove(responseStream));
 
             // Clean up empty entries
             if (ActiveStreams.TryGetValue(eventId, out var streams) && streams.IsEmpty)
@@ -97,10 +84,10 @@ public sealed class TicketGrpcServiceImpl(
         }
     }
 
-    /// <summary>Unary RPC — snapshot of current availability.</summary>
-    public override async Task<AvailabilitySnapshot> GetCurrentAvailability(
-        GetAvailabilityRequest request,
-        ServerCallContext context)
+    /// <summary>
+    /// Unary RPC — snapshot of current availability.
+    /// </summary>
+    public override async Task<AvailabilitySnapshot> GetCurrentAvailability(GetAvailabilityRequest request, ServerCallContext context)
     {
         if (!Guid.TryParse(request.EventId, out var eventId))
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid EventId."));
@@ -177,8 +164,6 @@ public sealed class TicketGrpcServiceImpl(
         }).ToList();
     }
 
-    private sealed record TicketAvailabilityRow(
-        string TicketId, string EventId, string TierName,
-        int AvailableQuantity, int TotalQuantity, bool IsSoldOut);
+    private sealed record TicketAvailabilityRow(string TicketId, string EventId, string TierName, int AvailableQuantity, int TotalQuantity, bool IsSoldOut);
 }
 

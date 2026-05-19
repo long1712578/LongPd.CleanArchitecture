@@ -18,9 +18,7 @@ public sealed class TicketReservedDomainEventHandler(
 {
     public async Task Handle(TicketReservedDomainEvent notification, CancellationToken ct)
     {
-        logger.LogInformation(
-            "[DomainEvent] TicketReserved — TicketId: {TicketId}, Remaining: {Remaining}",
-            notification.TicketId, notification.RemainingQuantity);
+        logger.LogInformation("[DomainEvent] TicketReserved — TicketId: {TicketId}, Remaining: {Remaining}", notification.TicketId, notification.RemainingQuantity);
 
         await notifier.NotifyAvailabilityChangedAsync(new TicketAvailabilityChangedNotification(
             notification.TicketId,
@@ -43,9 +41,7 @@ public sealed class TicketCancelledDomainEventHandler(
 {
     public async Task Handle(TicketCancelledDomainEvent notification, CancellationToken ct)
     {
-        logger.LogInformation(
-            "[DomainEvent] TicketCancelled — TicketId: {TicketId}, Restored: {Remaining}",
-            notification.TicketId, notification.RemainingQuantity);
+        logger.LogInformation("[DomainEvent] TicketCancelled — TicketId: {TicketId}, Restored: {Remaining}", notification.TicketId, notification.RemainingQuantity);
 
         await notifier.NotifyAvailabilityChangedAsync(new TicketAvailabilityChangedNotification(
             notification.TicketId,
