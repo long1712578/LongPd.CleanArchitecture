@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApplication();
+builder.Services.AddApplication(typeof(Program).Assembly);
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add OpenTelemetry for Jaeger (Tracing) and Prometheus (Metrics)

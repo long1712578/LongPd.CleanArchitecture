@@ -21,6 +21,11 @@ public sealed class CreateEventCommandHandler(IUnitOfWork unitOfWork)
     {
         try
         {
+            if (await unitOfWork.Events.ExistsByNameAsync(command.Name, ct))
+            {
+                throw new DomainException($"Sự kiện với tên '{command.Name}' đã tồn tại trong hệ thống. Vui lòng chọn tên khác để tránh trùng lặp.");
+            }
+
             // All invariants enforced inside Event.Create() — handler stays thin
             var @event = Event.Create(
                 command.Name,

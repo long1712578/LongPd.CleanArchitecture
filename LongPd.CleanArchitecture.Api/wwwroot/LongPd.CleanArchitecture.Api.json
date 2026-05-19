@@ -54,6 +54,28 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Get a list of all active (non-deleted) events.",
+        "operationId": "GetActiveEvents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActiveEventDto"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/events/publish": {
@@ -131,6 +153,49 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Soft delete a draft/unpublished event.",
+        "operationId": "DeleteEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -295,6 +360,49 @@
   },
   "components": {
     "schemas": {
+      "ActiveEventDto": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "startDate",
+          "endDate",
+          "venue",
+          "totalCapacity",
+          "isPublished"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venue": {
+            "type": "string"
+          },
+          "totalCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPublished": {
+            "type": "boolean"
+          }
+        }
+      },
       "AvailableTicketResponse": {
         "required": [
           "id",

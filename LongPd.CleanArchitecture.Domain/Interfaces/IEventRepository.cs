@@ -13,4 +13,9 @@ public interface IEventRepository : IRepository<Event>
     /// Used when publishing an event (needs to verify tickets exist).
     /// </summary>
     Task<Event?> GetByIdWithTicketsAsync(Guid eventId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Checks if an active event with the exact name already exists to prevent duplicates.
+    /// </summary>
+    Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default);
 }

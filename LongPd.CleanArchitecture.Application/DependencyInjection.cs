@@ -3,6 +3,8 @@ using LongPd.CleanArchitecture.Application.Abstractions.Caching;
 using LongPd.CleanArchitecture.Application.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 
+using System.Reflection;
+
 namespace LongPd.CleanArchitecture.Application;
 
 /// <summary>
@@ -11,13 +13,16 @@ namespace LongPd.CleanArchitecture.Application;
 /// </summary>
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(this IServiceCollection services, params Assembly[] additionalAssemblies)
     {
         var assembly = typeof(DependencyInjection).Assembly;
+        
+        var assemblies = new List<Assembly> { assembly };
+        assemblies.AddRange(additionalAssemblies);
 
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssembly(assembly);
+            cfg.RegisterServicesFromAssemblies([.. assemblies]);
 
             // Pipeline order matters: Idempotency → Logging → Validation → Caching → CacheInvalidation → Handler
             cfg.AddOpenBehavior(typeof(IdempotencyBehavior<,>));

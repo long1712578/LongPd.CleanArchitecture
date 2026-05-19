@@ -3,6 +3,7 @@ using LongPd.CleanArchitecture.Application.Features.Events.Commands.CreateEvent;
 using LongPd.CleanArchitecture.Application.Features.Events.Commands.PublishEvent;
 using LongPd.CleanArchitecture.Application.Features.Events.Dtos;
 using LongPd.CleanArchitecture.Application.Features.Events.Queries.GetEventById;
+using LongPd.CleanArchitecture.Application.Features.Events.Queries.GetActiveEvents;
 using MediatR;
 
 namespace LongPd.CleanArchitecture.Api.Endpoints;
@@ -41,9 +42,33 @@ public sealed class EventEndpoints : IEndpointDefinition
             .WithSummary("Get event details by ID, including ticket tiers.")
             .Produces<EventDetailResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/", GetActiveEventsAsync)
+            .WithName("GetActiveEvents")
+            .WithSummary("Get a list of all active (non-deleted) events.")
+            .Produces<IReadOnlyList<ActiveEventDto>>(StatusCodes.Status200OK);
+
+        group.MapDelete("/{id:guid}", DeleteEventAsync)
+            .WithName("DeleteEvent")
+            .WithSummary("Soft delete a draft/unpublished event.")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
+
+    private static async Task<IResult> GetActiveEventsAsync(ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetActiveEventsQuery(), ct);
+        return result.ToHttpResult();
+    }
+
+    private static async Task<IResult> DeleteEventAsync(Guid id, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new LongPd.CleanArchitecture.Application.Features.Events.Commands.DeleteEvent.DeleteEventCommand(id), ct);
+        return result.ToHttpResult();
+    }
 
     private static async Task<IResult> CreateEventAsync(
         CreateEventRequest request,
